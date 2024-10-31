@@ -15,12 +15,11 @@ const About: React.FC = () => {
         <p className="text-white">I&apos;m &quot;chase_saddy&quot; around <a href="https://twitter.com/chase_saddy" className="text-blue-500">Twitter</a>, <a href="https://twitch.tv/chase_saddy" className="text-blue-500">Twitch</a>. 
           My Hasan &quot;brand&quot; on <a href="https://tiktok.com/HasansProducer" className="text-blue-500">Tiktok</a>, <a href="https://twitter.com/HasansProducer" className="text-blue-500">Twitter</a>.
         </p>
-        <p className="text-white">The Twitter of the general umbrella of HasanAbiTV.com is 
-          <a href="https://twitter.com/HasanAbisTV" className="text-blue-500">HasanAbisTV</a>.
+        <p className="text-white">The Twitter of the general umbrella of HasanAbiTV.com is <a href="https://twitter.com/HasanAbisTV" className="text-blue-500">HasanAbisTV</a>.
         </p>
         <br />
         <p className="text-white">
-          It costs roughly $1 per 1000 requests for TikTok API usage. It costs a variable amount of money for the Twitter API upkeep. I pay these out of pocket right now. There&apos;s Patreon/donation coming for support with costs and future development.
+          It costs roughly $1 a day for TikTok API usage. It costs a variable amount of money for the Twitter API upkeep. I pay these out of pocket right now. There&apos;s Patreon/BuyMeaCoffee coming for support with costs and future development.
         </p>
         <p className="text-white">
           I&apos;m looking for people to help contribute and maintain the data for these Hasan fan sites. The HasTok and the overall HasanAbiTV site are still in beta. DM me anywhere for any support, requests, or concerns.
