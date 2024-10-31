@@ -67,7 +67,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
     }
 
-    console.log('Filter:', JSON.stringify(filter, null, 2)); // Debug log
+    console.log('Request query params:', req.query);
+    console.log('Constructed filter:', JSON.stringify(filter, null, 2));
 
     const [videos, totalCount] = await Promise.all([
       directus.request(
@@ -83,12 +84,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         aggregate('tiktok_videos', {
           aggregate: { count: '*' },
           filter: filter,
+          query: {
+            filter: filter
+          }
         })
       )
     ]);
 
-    console.log(`Fetched ${videos.length} videos`); // Debug log
-    console.log(`Total videos: ${totalCount[0].count}`); // Debug log
+    console.log('Filter applied:', JSON.stringify(filter, null, 2));
+    console.log(`Videos found for ${usernames}:`, videos.length);
+    console.log('Total count result:', JSON.stringify(totalCount, null, 2));
 
     res.status(200).json({
       videos,

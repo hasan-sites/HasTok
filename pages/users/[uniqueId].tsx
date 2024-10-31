@@ -280,13 +280,24 @@ export const getStaticProps: GetStaticProps = async (context) => {
       throw new Error('Invalid uniqueId');
     }
 
-    const protocol = process.env.VERCEL_ENV === 'production' ? 'https' : 'http';
-    const host = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_API_HOST || 'localhost:3000';
-    const baseUrl = `${protocol}://${host}`;
+    // Ensure we have a proper absolute URL for Node.js fetch
+    const baseURL = new URL('/api/users', process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : 'http://localhost:3000');
+    
+    // Add query parameters
+    baseURL.searchParams.set('uniqueId', uniqueId);
+    baseURL.searchParams.set('preview_token', process.env.NEXT_PUBLIC_PREVIEW_TOKEN || '');
 
-    // Fetch user data from your API
-    const userRes = await fetch(`${baseUrl}/api/users?uniqueId=${uniqueId}`);
-    if (!userRes.ok) throw new Error(`Failed to fetch user data: ${userRes.status} ${userRes.statusText}`);
+    console.log('Fetching from:', baseURL.toString());
+
+    const userRes = await fetch(baseURL.toString());
+    
+    if (!userRes.ok) {
+      const text = await userRes.text();
+      console.error('Failed response body:', text);
+      throw new Error(`Failed to fetch user data: ${userRes.status} ${userRes.statusText}`);
+    }
     const userData = await userRes.json();
 
     if (!userData.user) {
@@ -298,8 +309,17 @@ export const getStaticProps: GetStaticProps = async (context) => {
     const initialSortBy = 'created';
     const pageSize = 24;
 
-    // Fetch initial videos and total count from your API
-    const videosRes = await fetch(`${baseUrl}/api/videos?username=${uniqueId}&page=1&pageSize=${pageSize}&sortBy=${initialSortBy}`);
+    const videosBaseURL = new URL('/api/videos', process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : 'http://localhost:3000');
+
+    videosBaseURL.searchParams.set('usernames', uniqueId);
+    videosBaseURL.searchParams.set('page', '1');
+    videosBaseURL.searchParams.set('pageSize', pageSize.toString());
+    videosBaseURL.searchParams.set('sortBy', initialSortBy);
+    videosBaseURL.searchParams.set('preview_token', process.env.NEXT_PUBLIC_PREVIEW_TOKEN || '');
+
+    const videosRes = await fetch(videosBaseURL.toString());
     if (!videosRes.ok) throw new Error(`Failed to fetch videos: ${videosRes.status} ${videosRes.statusText}`);
     const { videos: initialVideos, totalVideos } = await videosRes.json();
 

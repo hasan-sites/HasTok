@@ -174,15 +174,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ initialUsers, totalUsers: initial
 
 export const getStaticProps = async () => {
   try {
-    // Determine the base URL
-    const protocol = process.env.VERCEL_ENV === 'production' ? 'https' : 'http';
-    const host = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_API_HOST || 'localhost:3000';
-    const baseUrl = `${protocol}://${host}`;
-    
-    const apiUrl = `${baseUrl}/api/users?page=1&pageSize=20&sortBy=followers`;
-    console.log('Fetching from URL:', apiUrl);
-
-    const response = await fetch(apiUrl);
+    const response = await fetch('/api/users?page=1&pageSize=20&sortBy=followers');
     if (!response.ok) throw new Error('Failed to fetch');
     const data = await response.json();
 
