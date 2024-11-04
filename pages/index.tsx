@@ -15,13 +15,16 @@ export const getStaticProps: GetStaticProps<HasTokProps> = async () => {
 
     return {
       props: {
-        tiktok: tiktokData,
+        tiktok: {
+          ...tiktokData,
+          initialSortBy: 'created',
+          initialDateFilter: 'all',
+        },
       },
       revalidate: 60 * 30
     };
   } catch (error) {
     console.error('Error in getStaticProps:', error);
-    // Return a default structure even if there's an error
     return {
       props: {
         tiktok: {
@@ -29,6 +32,7 @@ export const getStaticProps: GetStaticProps<HasTokProps> = async () => {
           totalVideos: 0,
           pageSize: 24,
           initialSortBy: 'created',
+          initialDateFilter: 'all',
           usernames: null,
         },
       },

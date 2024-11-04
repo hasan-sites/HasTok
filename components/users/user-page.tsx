@@ -1,11 +1,12 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import TopLinks from '@/components/topLinks';
 import TiktokVideos from '@/components/tiktok/videos';
 import { TikTokUser, TikTokVideoType } from '@/types/tiktok';
 import Head from 'next/head';
-import { GetStaticProps, GetStaticPaths } from 'next';
+import { useRouter } from 'next/router';
+import Image from 'next/image';
 
 interface UserPageProps {
   user: TikTokUser;
@@ -13,16 +14,25 @@ interface UserPageProps {
   totalVideos: number;
   pageSize: number;
   initialSortBy: 'created' | 'plays';
+  initialDateFilter: 'day' | 'week' | 'month' | 'year' | 'all';
 }
 
-const UserPage: React.FC<UserPageProps> = ({ user, initialVideos, totalVideos, pageSize, initialSortBy }) => {
+export const UserPage: React.FC<UserPageProps> = ({ 
+  user, 
+  initialVideos, 
+  totalVideos, 
+  pageSize, 
+  initialSortBy,
+  initialDateFilter 
+}) => {
+  const router = useRouter();
   const [videos, setVideos] = useState<TikTokVideoType[]>(initialVideos);
   const [hasMore, setHasMore] = useState(initialVideos.length < totalVideos);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'created' | 'plays'>(initialSortBy);
   const [isSwitchingSort, setIsSwitchingSort] = useState(false);
-  const [dateFilter, setDateFilter] = useState<'day' | 'week' | 'month' | 'year' | 'all'>('all');
+  const [dateFilter, setDateFilter] = useState<'day' | 'week' | 'month' | 'year' | 'all'>(initialDateFilter);
 
   const fetchVideos = useCallback(async (newSortBy: 'created' | 'plays', newDateFilter: 'day' | 'week' | 'month' | 'year' | 'all') => {
     setIsSwitchingSort(true);
@@ -44,21 +54,21 @@ const UserPage: React.FC<UserPageProps> = ({ user, initialVideos, totalVideos, p
     }
   }, [pageSize, user]);
 
-  useEffect(() => {
-    if (user) {
-      fetchVideos(sortBy, dateFilter);
-    }
-  }, [sortBy, dateFilter, fetchVideos, user]);
-
   const changeSortBy = (newSortBy: 'created' | 'plays') => {
     if (newSortBy !== sortBy) {
+      const path = newSortBy === 'created' ? 'date' : 'popular';
+      router.push(`/users/${user.unique_id}/${path}/${dateFilter}`);
       setSortBy(newSortBy);
+      fetchVideos(newSortBy, dateFilter);
     }
   };
 
   const changeDateFilter = (newDateFilter: 'day' | 'week' | 'month' | 'year' | 'all') => {
     if (newDateFilter !== dateFilter) {
+      const path = sortBy === 'created' ? 'date' : 'popular';
+      router.push(`/users/${user.unique_id}/${path}/${newDateFilter}`);
       setDateFilter(newDateFilter);
+      fetchVideos(sortBy, newDateFilter);
     }
   };
 
@@ -116,9 +126,11 @@ const UserPage: React.FC<UserPageProps> = ({ user, initialVideos, totalVideos, p
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <img
+                  <Image
                     src={user.avatar || '/red-eyes.jpg'}
                     alt={user.nickname}
+                    width={96}
+                    height={96}
                     className="w-24 h-24 rounded-full mr-4"
                   />
                 </a>
@@ -265,93 +277,3 @@ const UserPage: React.FC<UserPageProps> = ({ user, initialVideos, totalVideos, p
     </>
   );
 };
-
-export const getStaticPaths: GetStaticPaths = async () => {
-  return {
-    paths: [],
-    fallback: 'blocking'
-  };
-};
-
-export const getStaticProps: GetStaticProps = async (context) => {
-  try {
-    const uniqueId = context.params?.uniqueId;
-    if (typeof uniqueId !== 'string') {
-      throw new Error('Invalid uniqueId');
-    }
-
-    // Ensure we have a proper absolute URL for Node.js fetch
-    const baseURL = new URL('/api/users', process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000');
-    
-    // Add query parameters
-    baseURL.searchParams.set('uniqueId', uniqueId);
-    baseURL.searchParams.set('preview_token', process.env.NEXT_PUBLIC_PREVIEW_TOKEN || '');
-
-    console.log('Fetching from:', baseURL.toString());
-
-    const userRes = await fetch(baseURL.toString());
-    
-    if (!userRes.ok) {
-      const text = await userRes.text();
-      console.error('Failed response body:', text);
-      throw new Error(`Failed to fetch user data: ${userRes.status} ${userRes.statusText}`);
-    }
-    const userData = await userRes.json();
-
-    if (!userData.user) {
-      return { notFound: true };
-    }
-
-    const user = userData.user;
-
-    const initialSortBy = 'created';
-    const pageSize = 24;
-
-    const videosBaseURL = new URL('/api/videos', process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000');
-
-    videosBaseURL.searchParams.set('usernames', uniqueId);
-    videosBaseURL.searchParams.set('page', '1');
-    videosBaseURL.searchParams.set('pageSize', pageSize.toString());
-    videosBaseURL.searchParams.set('sortBy', initialSortBy);
-    videosBaseURL.searchParams.set('preview_token', process.env.NEXT_PUBLIC_PREVIEW_TOKEN || '');
-
-    const videosRes = await fetch(videosBaseURL.toString());
-    if (!videosRes.ok) throw new Error(`Failed to fetch videos: ${videosRes.status} ${videosRes.statusText}`);
-    const { videos: initialVideos, totalVideos } = await videosRes.json();
-
-    return {
-      props: {
-        user,
-        initialVideos: initialVideos || [], // Ensure this is never undefined
-        totalVideos: totalVideos || 0, // Ensure this is never undefined
-        pageSize,
-        initialSortBy,
-      },
-      revalidate: 3600, // Revalidate every hour
-    };
-  } catch (error) {
-    console.error('Error in getStaticProps:', error);
-    if (error instanceof Error) {
-      console.error('Error name:', error.name);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-    }
-    // Return a fallback object with empty/null values
-    return {
-      props: {
-        user: null,
-        initialVideos: [],
-        totalVideos: 0,
-        pageSize: 24,
-        initialSortBy: 'created',
-      },
-      revalidate: 3600,
-    };
-  }
-};
-
-export default UserPage;

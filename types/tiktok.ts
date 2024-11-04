@@ -22,6 +22,7 @@ export interface TikTokPapiData {
   totalVideos: number;
   pageSize: number;
   initialSortBy: 'created' | 'plays';
+  initialDateFilter: 'day' | 'week' | 'month' | 'year' | 'all';
   usernames?: string[] | null;
 }
 

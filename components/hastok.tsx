@@ -1,6 +1,7 @@
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
@@ -11,7 +12,8 @@ import { HasTokProps, TikTokVideoType } from '@/types/tiktok';
 import TopLinks from "@/components/topLinks";
 
 const HasTok: React.FC<HasTokProps> = ({ tiktok }) => {
-  const { initialVideos, totalVideos, pageSize, initialSortBy, usernames } = tiktok;
+  const router = useRouter();
+  const { initialVideos, totalVideos, pageSize, initialSortBy, initialDateFilter, usernames } = tiktok;
 
   const [videos, setVideos] = useState<TikTokVideoType[]>(initialVideos || []);
   const [hasMore, setHasMore] = useState(false);
@@ -19,43 +21,40 @@ const HasTok: React.FC<HasTokProps> = ({ tiktok }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'created' | 'plays'>(initialSortBy);
   const [isSwitchingSort, setIsSwitchingSort] = useState(false);
-  const [dateFilter, setDateFilter] = useState<'day' | 'week' | 'month' | 'year' | 'all'>('all');
-  
-  useEffect(() => {
-    setVideos(initialVideos || []);
-    setHasMore((initialVideos?.length || 0) < totalVideos);
-  }, [initialVideos, totalVideos]);
+  const [dateFilter, setDateFilter] = useState<'day' | 'week' | 'month' | 'year' | 'all'>(initialDateFilter);
 
   const fetchVideos = useCallback(async (newSortBy: 'created' | 'plays', newDateFilter: 'day' | 'week' | 'month' | 'year' | 'all') => {
     setIsSwitchingSort(true);
     try {
       const usernamesParam = usernames && usernames.length > 0 ? `&usernames=${usernames.join(',')}` : '';
-      const response = await fetch(`/api/oldVideos?page=1&pageSize=${pageSize}&sortBy=${newSortBy}&dateFilter=${newDateFilter}${usernamesParam}`);
+      const response = await fetch(`/api/videos?page=1&pageSize=${pageSize}&sortBy=${newSortBy}&dateFilter=${newDateFilter}${usernamesParam}`);
       if (!response.ok) throw new Error('Failed to fetch');
-      const newVideos = await response.json();
+      const { videos: newVideos, totalVideos: newTotal } = await response.json();
       setVideos(newVideos);
       setPage(1);
-      setHasMore((newVideos?.length || 0) < totalVideos);
+      setHasMore((newVideos?.length || 0) < newTotal);
     } catch (error) {
       console.error('Error fetching videos:', error);
     } finally {
       setIsSwitchingSort(false);
     }
-  }, [pageSize, totalVideos, usernames]);
-
-  useEffect(() => {
-    fetchVideos(sortBy, dateFilter);
-  }, [sortBy, dateFilter, fetchVideos]);
+  }, [pageSize, usernames]);
 
   const changeSortBy = (newSortBy: 'created' | 'plays') => {
     if (newSortBy !== sortBy) {
+      const path = newSortBy === 'created' ? '/date' : '/popular';
+      router.push(`${path}/${dateFilter}`);
       setSortBy(newSortBy);
+      fetchVideos(newSortBy, dateFilter);
     }
   };
 
   const changeDateFilter = (newDateFilter: 'day' | 'week' | 'month' | 'year' | 'all') => {
     if (newDateFilter !== dateFilter) {
+      const path = sortBy === 'created' ? '/date' : '/popular';
+      router.push(`${path}/${newDateFilter}`);
       setDateFilter(newDateFilter);
+      fetchVideos(sortBy, newDateFilter);
     }
   };
 
@@ -65,14 +64,14 @@ const HasTok: React.FC<HasTokProps> = ({ tiktok }) => {
     const nextPage = page + 1;
     try {
       const usernamesParam = usernames && usernames.length > 0 ? `&usernames=${usernames.join(',')}` : '';
-      const response = await fetch(`/api/oldVideos?page=${nextPage}&pageSize=${pageSize}&sortBy=${sortBy}&dateFilter=${dateFilter}${usernamesParam}`);
+      const response = await fetch(`/api/videos?page=${nextPage}&pageSize=${pageSize}&sortBy=${sortBy}&dateFilter=${dateFilter}${usernamesParam}`);
       if (!response.ok) throw new Error('Failed to fetch');
-      const newVideos = await response.json();
+      const { videos: newVideos, totalVideos: newTotal } = await response.json();
 
       if (newVideos && newVideos.length > 0) {
         setVideos(prevVideos => [...prevVideos, ...newVideos]);
         setPage(nextPage);
-        setHasMore((videos.length + newVideos.length) < totalVideos);
+        setHasMore((videos.length + newVideos.length) < newTotal);
       } else {
         setHasMore(false);
       }
@@ -82,7 +81,7 @@ const HasTok: React.FC<HasTokProps> = ({ tiktok }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, isLoading, hasMore, videos.length, totalVideos, sortBy, dateFilter, usernames]);
+  }, [page, pageSize, isLoading, hasMore, videos.length, sortBy, dateFilter, usernames]);
 
   return (
     <>
