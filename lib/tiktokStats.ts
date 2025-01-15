@@ -14,19 +14,10 @@ export async function getTikTokStats() {
     }
     await directus.login(email, password);
 
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const isoDate = thirtyDaysAgo.toISOString();
-
     const stats = await directus.request(
       readItems('tiktok_user_stats_history', {
         fields: ['timestamp', 'hearts', 'followers', 'videos', 'friends', 'user'],
         sort: ['timestamp'],
-        filter: {
-          timestamp: {
-            _gte: isoDate,
-          },
-        },
         limit: -1, // Fetch all results
       })
     );

@@ -105,13 +105,14 @@ const TikTokStatsPage: React.FC<TikTokStatsPageProps> = ({ tiktokStats }) => {
           </div>
           <div className="space-y-8">
             <DailyTikTokStats 
-              dailyStats={tiktokStats.dailyStats.slice(-30)} 
-              title="Last 30 Days (Daily)" 
-            />
-            <DailyTikTokStats 
               dailyStats={weeklyStats} 
               title="All Time (Weekly)" 
               isWeekly
+            />
+            
+            <DailyTikTokStats 
+              dailyStats={tiktokStats.dailyStats.slice(-30)} 
+              title="Last 30 Days (Daily)" 
             />
           </div>
           <div className="mt-8 text-center text-white">

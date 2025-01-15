@@ -4,7 +4,7 @@ import { UserPage } from '@/components/users/user-page';
 import { DateFilterType } from '@/types/filters';
 import { getTikTokData } from "@/lib/tiktokPapi";
 
-export const getStaticPaths = async () => {
+export const getStaticPaths: GetStaticPaths = async () => {
   return {
     paths: [],
     fallback: 'blocking'

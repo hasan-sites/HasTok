@@ -55,6 +55,7 @@ export async function getTikTokData(pageSize: number, sortBy: 'created' | 'plays
       totalVideos,
       pageSize,
       initialSortBy: sortBy,
+      initialDateFilter: 'all',
       usernames: usernames || null,
     };
   } catch (error) {

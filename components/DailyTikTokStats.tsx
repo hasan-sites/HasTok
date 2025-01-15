@@ -37,8 +37,24 @@ interface DailyTikTokStatsProps {
 }
 
 export default function DailyTikTokStats({ dailyStats, title, isWeekly = false }: DailyTikTokStatsProps) {
+  const formatDate = (date: string) => {
+    if (!isWeekly) return date;
+    
+    const weekStart = new Date(date);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    
+    return `${weekStart.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    })} - ${weekEnd.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    })}`;
+  };
+
   const createChartData = (label: string, data: number[], color: string) => ({
-    labels: dailyStats.map(stat => stat.date),
+    labels: dailyStats.map(stat => formatDate(stat.date)),
     datasets: [
       {
         label,
@@ -178,7 +194,9 @@ export default function DailyTikTokStats({ dailyStats, title, isWeekly = false }
       <h2 className="text-2xl font-bold text-white mb-4">{title}</h2>
       {charts.map((chart, index) => (
         <div key={index} className="bg-gray-800 rounded-lg shadow-md overflow-hidden">
-          <h3 className="text-2xl font-bold bg-green-500 text-white p-4 mb-4 text-center">Daily {chart.label} Stats</h3>
+          <h3 className="text-2xl font-bold bg-green-500 text-white p-4 mb-4 text-center">
+            {isWeekly ? 'Weekly' : 'Daily'} {chart.label} Stats
+          </h3>
           <div className="p-4">
             <Line options={options} data={createChartData(chart.label, chart.data, chart.color)} />
           </div>
