@@ -24,17 +24,19 @@ ChartJS.register(
 );
 
 interface DailyTikTokStatsProps {
-  dailyStats: { 
-    date: string; 
-    hearts: number; 
+  dailyStats: {
+    date: string;
+    hearts: number;
     followers: number;
     videos: number;
     friends: number;
-    accountCount: number 
+    accountCount: number;
   }[];
+  title: string;
+  isWeekly?: boolean;
 }
 
-const DailyTikTokStats: React.FC<DailyTikTokStatsProps> = ({ dailyStats }) => {
+export default function DailyTikTokStats({ dailyStats, title, isWeekly = false }: DailyTikTokStatsProps) {
   const createChartData = (label: string, data: number[], color: string) => ({
     labels: dailyStats.map(stat => stat.date),
     datasets: [
@@ -172,7 +174,8 @@ const DailyTikTokStats: React.FC<DailyTikTokStatsProps> = ({ dailyStats }) => {
   ];
 
   return (
-    <div className="mt-8 space-y-8">
+    <div className="mt-8">
+      <h2 className="text-2xl font-bold text-white mb-4">{title}</h2>
       {charts.map((chart, index) => (
         <div key={index} className="bg-gray-800 rounded-lg shadow-md overflow-hidden">
           <h3 className="text-2xl font-bold bg-green-500 text-white p-4 mb-4 text-center">Daily {chart.label} Stats</h3>
@@ -183,6 +186,4 @@ const DailyTikTokStats: React.FC<DailyTikTokStatsProps> = ({ dailyStats }) => {
       ))}
     </div>
   );
-};
-
-export default DailyTikTokStats;
+}

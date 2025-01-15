@@ -48,6 +48,39 @@ const TikTokStatsPage: React.FC<TikTokStatsPageProps> = ({ tiktokStats }) => {
       : `${formattedGain} (in ${actualDays} day${actualDays !== 1 ? 's' : ''})`;
   };
 
+  function processWeeklyStats(dailyStats: typeof tiktokStats.dailyStats) {
+    const weeklyStats = dailyStats.reduce((acc: typeof dailyStats, curr) => {
+      const date = new Date(curr.date);
+      // Get the start of the week (Sunday)
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay());
+      const weekKey = weekStart.toISOString().split('T')[0];
+
+      const existingWeek = acc.find(w => w.date === weekKey);
+      if (existingWeek) {
+        existingWeek.hearts = Math.max(existingWeek.hearts, curr.hearts);
+        existingWeek.followers = Math.max(existingWeek.followers, curr.followers);
+        existingWeek.videos = Math.max(existingWeek.videos, curr.videos);
+        existingWeek.friends = Math.max(existingWeek.friends, curr.friends);
+        existingWeek.accountCount = Math.max(existingWeek.accountCount, curr.accountCount);
+      } else {
+        acc.push({
+          date: weekKey,
+          hearts: curr.hearts,
+          followers: curr.followers,
+          videos: curr.videos,
+          friends: curr.friends,
+          accountCount: curr.accountCount
+        });
+      }
+      return acc;
+    }, []);
+
+    return weeklyStats.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }
+
+  const weeklyStats = processWeeklyStats(tiktokStats.dailyStats);
+
   return (
     <>
       <Head>
@@ -70,7 +103,17 @@ const TikTokStatsPage: React.FC<TikTokStatsPageProps> = ({ tiktokStats }) => {
               </div>
             ))}
           </div>
-          <DailyTikTokStats dailyStats={tiktokStats.dailyStats} />
+          <div className="space-y-8">
+            <DailyTikTokStats 
+              dailyStats={tiktokStats.dailyStats.slice(-30)} 
+              title="Last 30 Days (Daily)" 
+            />
+            <DailyTikTokStats 
+              dailyStats={weeklyStats} 
+              title="All Time (Weekly)" 
+              isWeekly
+            />
+          </div>
           <div className="mt-8 text-center text-white">
             <p>These stats show the total number of hearts, followers, videos, and friends for TikTok accounts, as well as their growth over different time periods.</p>
           </div>
